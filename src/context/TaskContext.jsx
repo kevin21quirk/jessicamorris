@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { api } from '../lib/api'
 
 const TaskContext = createContext()
 
@@ -11,175 +12,188 @@ export const useTaskContext = () => {
 }
 
 export const TaskProvider = ({ children }) => {
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem('jm-tasks')
-    return saved ? JSON.parse(saved) : [
-      {
-        id: '1',
-        title: 'Daily Telegraph Lawyer',
-        description: '',
-        assignedTo: 'Jessica',
-        status: 'pending',
-        priority: 'high',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-        documents: [],
-        timeline: [{
-          id: '1',
-          type: 'created',
-          message: 'Task created',
-          user: 'System',
-          timestamp: new Date().toISOString()
-        }]
-      },
-      {
-        id: '2',
-        title: 'ACAS Contact',
-        description: '',
-        assignedTo: 'Jessica',
-        status: 'pending',
-        priority: 'high',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-        documents: [],
-        timeline: [{
-          id: '1',
-          type: 'created',
-          message: 'Task created',
-          user: 'System',
-          timestamp: new Date().toISOString()
-        }]
-      },
-      {
-        id: '3',
-        title: 'Vauxhall Lawyer',
-        description: '',
-        assignedTo: 'Jessica',
-        status: 'pending',
-        priority: 'high',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        createdAt: new Date().toISOString(),
-        documents: [],
-        timeline: [{
-          id: '1',
-          type: 'created',
-          message: 'Task created',
-          user: 'System',
-          timestamp: new Date().toISOString()
-        }]
-      }
-    ]
-  })
-
-  const [calendarEvents, setCalendarEvents] = useState(() => {
-    const saved = localStorage.getItem('jm-calendar')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [tasks, setTasks] = useState([])
+  const [calendarEvents, setCalendarEvents] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    localStorage.setItem('jm-tasks', JSON.stringify(tasks))
-  }, [tasks])
+    loadData()
+  }, [])
 
-  useEffect(() => {
-    localStorage.setItem('jm-calendar', JSON.stringify(calendarEvents))
-  }, [calendarEvents])
-
-  const addTask = (task) => {
-    const newTask = {
-      ...task,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      documents: [],
-      timeline: [{
-        id: '1',
-        type: 'created',
-        message: 'Task created',
-        user: 'Admin',
-        timestamp: new Date().toISOString()
-      }]
+  const loadData = async () => {
+    try {
+      const [tasksData, eventsData] = await Promise.all([
+        api.getTasks(),
+        api.getCalendarEvents()
+      ])
+      setTasks(tasksData)
+      setCalendarEvents(eventsData)
+    } catch (error) {
+      console.error('Failed to load data:', error)
+    } finally {
+      setLoading(false)
     }
-    setTasks([...tasks, newTask])
   }
 
-  const updateTask = (id, updates, timelineMessage) => {
-    setTasks(tasks.map(task => {
-      if (task.id === id) {
-        const updatedTask = { ...task, ...updates }
-        if (timelineMessage) {
-          const timelineEntry = {
-            id: Date.now().toString(),
-            type: 'update',
-            message: timelineMessage,
-            user: 'Admin',
-            timestamp: new Date().toISOString()
-          }
-          updatedTask.timeline = [...(task.timeline || []), timelineEntry]
-        }
-        return updatedTask
-      }
-      return task
-    }))
-  }
-
-  const addTimelineEntry = (taskId, entry) => {
-    setTasks(tasks.map(task => {
-      if (task.id === taskId) {
-        const timelineEntry = {
-          id: Date.now().toString(),
-          type: entry.type || 'update',
-          message: entry.message,
-          user: entry.user || 'Admin',
+  const addTask = async (task) => {
+    try {
+      const newTask = {
+        ...task,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        documents: [],
+        timeline: [{
+          id: '1',
+          type: 'created',
+          message: 'Task created',
+          user: 'Admin',
           timestamp: new Date().toISOString()
-        }
-        return {
-          ...task,
-          timeline: [...(task.timeline || []), timelineEntry]
-        }
+        }]
       }
-      return task
-    }))
+      const created = await api.createTask(newTask)
+      setTasks([...tasks, created])
+    } catch (error) {
+      console.error('Failed to add task:', error)
+    }
   }
 
-  const deleteTask = (id) => {
-    setTasks(tasks.filter(task => task.id !== id))
-  }
-
-  const addDocument = (taskId, document) => {
-    setTasks(tasks.map(task => {
-      if (task.id === taskId) {
+  const updateTask = async (id, updates, timelineMessage) => {
+    try {
+      const task = tasks.find(t => t.id === id)
+      if (!task) return
+      
+      const updatedTask = { ...task, ...updates }
+      if (timelineMessage) {
         const timelineEntry = {
           id: Date.now().toString(),
-          type: 'document',
-          message: `Document uploaded: ${document.name}`,
+          type: 'update',
+          message: timelineMessage,
           user: 'Admin',
           timestamp: new Date().toISOString()
         }
-        return {
-          ...task,
-          documents: [...(task.documents || []), document],
-          timeline: [...(task.timeline || []), timelineEntry]
-        }
+        updatedTask.timeline = [...(task.timeline || []), timelineEntry]
       }
-      return task
-    }))
-  }
-
-  const addCalendarEvent = (event) => {
-    const newEvent = {
-      ...event,
-      id: Date.now().toString()
+      
+      await api.updateTask(id, updatedTask)
+      setTasks(tasks.map(t => t.id === id ? updatedTask : t))
+    } catch (error) {
+      console.error('Failed to update task:', error)
     }
-    setCalendarEvents([...calendarEvents, newEvent])
   }
 
-  const updateCalendarEvent = (id, updates) => {
-    setCalendarEvents(calendarEvents.map(event => 
-      event.id === id ? { ...event, ...updates } : event
-    ))
+  const addTimelineEntry = async (taskId, entry) => {
+    try {
+      const task = tasks.find(t => t.id === taskId)
+      if (!task) return
+      
+      const timelineEntry = {
+        id: Date.now().toString(),
+        type: entry.type || 'update',
+        message: entry.message,
+        user: entry.user || 'Admin',
+        timestamp: new Date().toISOString()
+      }
+      
+      const updatedTask = {
+        ...task,
+        timeline: [...(task.timeline || []), timelineEntry]
+      }
+      
+      await api.updateTask(taskId, updatedTask)
+      setTasks(tasks.map(t => t.id === taskId ? updatedTask : t))
+    } catch (error) {
+      console.error('Failed to add timeline entry:', error)
+    }
   }
 
-  const deleteCalendarEvent = (id) => {
-    setCalendarEvents(calendarEvents.filter(event => event.id !== id))
+  const deleteTask = async (id) => {
+    try {
+      await api.deleteTask(id)
+      setTasks(tasks.filter(task => task.id !== id))
+    } catch (error) {
+      console.error('Failed to delete task:', error)
+    }
+  }
+
+  const addDocument = async (taskId, document) => {
+    try {
+      const task = tasks.find(t => t.id === taskId)
+      if (!task) return
+      
+      const timelineEntry = {
+        id: Date.now().toString(),
+        type: 'document',
+        message: `Document uploaded: ${document.name}`,
+        user: 'Admin',
+        timestamp: new Date().toISOString()
+      }
+      
+      const updatedTask = {
+        ...task,
+        documents: [...(task.documents || []), document],
+        timeline: [...(task.timeline || []), timelineEntry]
+      }
+      
+      await api.updateTask(taskId, updatedTask)
+      setTasks(tasks.map(t => t.id === taskId ? updatedTask : t))
+    } catch (error) {
+      console.error('Failed to add document:', error)
+    }
+  }
+
+  const addCalendarEvent = async (event) => {
+    try {
+      const newEvent = {
+        ...event,
+        id: Date.now().toString()
+      }
+      const created = await api.createCalendarEvent(newEvent)
+      setCalendarEvents([...calendarEvents, created])
+    } catch (error) {
+      console.error('Failed to add calendar event:', error)
+    }
+  }
+
+  const updateCalendarEvent = async (id, updates) => {
+    try {
+      const event = calendarEvents.find(e => e.id === id)
+      if (!event) return
+      
+      const updatedEvent = { ...event, ...updates }
+      await api.updateCalendarEvent(id, updatedEvent)
+      setCalendarEvents(calendarEvents.map(e => e.id === id ? updatedEvent : e))
+    } catch (error) {
+      console.error('Failed to update calendar event:', error)
+    }
+  }
+
+  const deleteCalendarEvent = async (id) => {
+    try {
+      await api.deleteCalendarEvent(id)
+      setCalendarEvents(calendarEvents.filter(event => event.id !== id))
+    } catch (error) {
+      console.error('Failed to delete calendar event:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <TaskContext.Provider value={{
+        tasks: [],
+        addTask: () => {},
+        updateTask: () => {},
+        deleteTask: () => {},
+        addDocument: () => {},
+        addTimelineEntry: () => {},
+        calendarEvents: [],
+        addCalendarEvent: () => {},
+        updateCalendarEvent: () => {},
+        deleteCalendarEvent: () => {},
+        loading: true
+      }}>
+        {children}
+      </TaskContext.Provider>
+    )
   }
 
   return (
@@ -193,7 +207,8 @@ export const TaskProvider = ({ children }) => {
       calendarEvents,
       addCalendarEvent,
       updateCalendarEvent,
-      deleteCalendarEvent
+      deleteCalendarEvent,
+      loading: false
     }}>
       {children}
     </TaskContext.Provider>

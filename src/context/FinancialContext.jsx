@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { api } from '../lib/api'
 
 const FinancialContext = createContext()
 
@@ -11,60 +12,116 @@ export const useFinancialContext = () => {
 }
 
 export const FinancialProvider = ({ children }) => {
-  const [expenses, setExpenses] = useState(() => {
-    const saved = localStorage.getItem('jm-expenses')
-    return saved ? JSON.parse(saved) : []
-  })
-
-  const [invoices, setInvoices] = useState(() => {
-    const saved = localStorage.getItem('jm-invoices')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [expenses, setExpenses] = useState([])
+  const [invoices, setInvoices] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    localStorage.setItem('jm-expenses', JSON.stringify(expenses))
-  }, [expenses])
+    loadFinancialData()
+  }, [])
 
-  useEffect(() => {
-    localStorage.setItem('jm-invoices', JSON.stringify(invoices))
-  }, [invoices])
-
-  const addExpense = (expense) => {
-    const newExpense = {
-      ...expense,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
+  const loadFinancialData = async () => {
+    try {
+      const data = await api.getFinancialRecords()
+      setExpenses(data.filter(r => r.type === 'expense'))
+      setInvoices(data.filter(r => r.type === 'invoice'))
+    } catch (error) {
+      console.error('Failed to load financial data:', error)
+    } finally {
+      setLoading(false)
     }
-    setExpenses([...expenses, newExpense])
   }
 
-  const updateExpense = (id, updates) => {
-    setExpenses(expenses.map(expense => 
-      expense.id === id ? { ...expense, ...updates } : expense
-    ))
-  }
-
-  const deleteExpense = (id) => {
-    setExpenses(expenses.filter(expense => expense.id !== id))
-  }
-
-  const addInvoice = (invoice) => {
-    const newInvoice = {
-      ...invoice,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
+  const addExpense = async (expense) => {
+    try {
+      const newExpense = {
+        ...expense,
+        type: 'expense',
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString()
+      }
+      const created = await api.createFinancialRecord(newExpense)
+      setExpenses([...expenses, created])
+    } catch (error) {
+      console.error('Failed to add expense:', error)
     }
-    setInvoices([...invoices, newInvoice])
   }
 
-  const updateInvoice = (id, updates) => {
-    setInvoices(invoices.map(invoice => 
-      invoice.id === id ? { ...invoice, ...updates } : invoice
-    ))
+  const updateExpense = async (id, updates) => {
+    try {
+      const expense = expenses.find(e => e.id === id)
+      if (!expense) return
+      
+      const updatedExpense = { ...expense, ...updates }
+      await api.updateFinancialRecord(id, updatedExpense)
+      setExpenses(expenses.map(e => e.id === id ? updatedExpense : e))
+    } catch (error) {
+      console.error('Failed to update expense:', error)
+    }
   }
 
-  const deleteInvoice = (id) => {
-    setInvoices(invoices.filter(invoice => invoice.id !== id))
+  const deleteExpense = async (id) => {
+    try {
+      await api.deleteFinancialRecord(id)
+      setExpenses(expenses.filter(expense => expense.id !== id))
+    } catch (error) {
+      console.error('Failed to delete expense:', error)
+    }
+  }
+
+  const addInvoice = async (invoice) => {
+    try {
+      const newInvoice = {
+        ...invoice,
+        type: 'invoice',
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString()
+      }
+      const created = await api.createFinancialRecord(newInvoice)
+      setInvoices([...invoices, created])
+    } catch (error) {
+      console.error('Failed to add invoice:', error)
+    }
+  }
+
+  const updateInvoice = async (id, updates) => {
+    try {
+      const invoice = invoices.find(i => i.id === id)
+      if (!invoice) return
+      
+      const updatedInvoice = { ...invoice, ...updates }
+      await api.updateFinancialRecord(id, updatedInvoice)
+      setInvoices(invoices.map(i => i.id === id ? updatedInvoice : i))
+    } catch (error) {
+      console.error('Failed to update invoice:', error)
+    }
+  }
+
+  const deleteInvoice = async (id) => {
+    try {
+      await api.deleteFinancialRecord(id)
+      setInvoices(invoices.filter(invoice => invoice.id !== id))
+    } catch (error) {
+      console.error('Failed to delete invoice:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <FinancialContext.Provider value={{
+        expenses: [],
+        addExpense: () => {},
+        updateExpense: () => {},
+        deleteExpense: () => {},
+        invoices: [],
+        addInvoice: () => {},
+        updateInvoice: () => {},
+        deleteInvoice: () => {},
+        loading: true
+      }}>
+        {children}
+      </FinancialContext.Provider>
+    )
   }
 
   return (
@@ -76,7 +133,8 @@ export const FinancialProvider = ({ children }) => {
       invoices,
       addInvoice,
       updateInvoice,
-      deleteInvoice
+      deleteInvoice,
+      loading: false
     }}>
       {children}
     </FinancialContext.Provider>

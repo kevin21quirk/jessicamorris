@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { api } from '../lib/api'
 
 const EmailContext = createContext()
 
@@ -11,32 +12,72 @@ export const useEmailContext = () => {
 }
 
 export const EmailProvider = ({ children }) => {
-  const [emails, setEmails] = useState(() => {
-    const saved = localStorage.getItem('jm-emails')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [emails, setEmails] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    localStorage.setItem('jm-emails', JSON.stringify(emails))
-  }, [emails])
+    loadEmails()
+  }, [])
 
-  const addEmail = (email) => {
-    const newEmail = {
-      ...email,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
+  const loadEmails = async () => {
+    try {
+      const data = await api.getEmails()
+      setEmails(data)
+    } catch (error) {
+      console.error('Failed to load emails:', error)
+    } finally {
+      setLoading(false)
     }
-    setEmails([...emails, newEmail])
   }
 
-  const updateEmail = (id, updates) => {
-    setEmails(emails.map(email => 
-      email.id === id ? { ...email, ...updates } : email
-    ))
+  const addEmail = async (email) => {
+    try {
+      const newEmail = {
+        ...email,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString()
+      }
+      const created = await api.createEmail(newEmail)
+      setEmails([...emails, created])
+    } catch (error) {
+      console.error('Failed to add email:', error)
+    }
   }
 
-  const deleteEmail = (id) => {
-    setEmails(emails.filter(email => email.id !== id))
+  const updateEmail = async (id, updates) => {
+    try {
+      const email = emails.find(e => e.id === id)
+      if (!email) return
+      
+      const updatedEmail = { ...email, ...updates }
+      await api.updateEmail(id, updatedEmail)
+      setEmails(emails.map(e => e.id === id ? updatedEmail : e))
+    } catch (error) {
+      console.error('Failed to update email:', error)
+    }
+  }
+
+  const deleteEmail = async (id) => {
+    try {
+      await api.deleteEmail(id)
+      setEmails(emails.filter(email => email.id !== id))
+    } catch (error) {
+      console.error('Failed to delete email:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <EmailContext.Provider value={{
+        emails: [],
+        addEmail: () => {},
+        updateEmail: () => {},
+        deleteEmail: () => {},
+        loading: true
+      }}>
+        {children}
+      </EmailContext.Provider>
+    )
   }
 
   return (
@@ -44,7 +85,8 @@ export const EmailProvider = ({ children }) => {
       emails,
       addEmail,
       updateEmail,
-      deleteEmail
+      deleteEmail,
+      loading: false
     }}>
       {children}
     </EmailContext.Provider>

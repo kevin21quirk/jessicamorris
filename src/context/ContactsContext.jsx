@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { api } from '../lib/api'
 
 const ContactsContext = createContext()
 
@@ -11,32 +12,72 @@ export const useContactsContext = () => {
 }
 
 export const ContactsProvider = ({ children }) => {
-  const [contacts, setContacts] = useState(() => {
-    const saved = localStorage.getItem('jm-contacts')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [contacts, setContacts] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    localStorage.setItem('jm-contacts', JSON.stringify(contacts))
-  }, [contacts])
+    loadContacts()
+  }, [])
 
-  const addContact = (contact) => {
-    const newContact = {
-      ...contact,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
+  const loadContacts = async () => {
+    try {
+      const data = await api.getContacts()
+      setContacts(data)
+    } catch (error) {
+      console.error('Failed to load contacts:', error)
+    } finally {
+      setLoading(false)
     }
-    setContacts([...contacts, newContact])
   }
 
-  const updateContact = (id, updates) => {
-    setContacts(contacts.map(contact => 
-      contact.id === id ? { ...contact, ...updates } : contact
-    ))
+  const addContact = async (contact) => {
+    try {
+      const newContact = {
+        ...contact,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString()
+      }
+      const created = await api.createContact(newContact)
+      setContacts([...contacts, created])
+    } catch (error) {
+      console.error('Failed to add contact:', error)
+    }
   }
 
-  const deleteContact = (id) => {
-    setContacts(contacts.filter(contact => contact.id !== id))
+  const updateContact = async (id, updates) => {
+    try {
+      const contact = contacts.find(c => c.id === id)
+      if (!contact) return
+      
+      const updatedContact = { ...contact, ...updates }
+      await api.updateContact(id, updatedContact)
+      setContacts(contacts.map(c => c.id === id ? updatedContact : c))
+    } catch (error) {
+      console.error('Failed to update contact:', error)
+    }
+  }
+
+  const deleteContact = async (id) => {
+    try {
+      await api.deleteContact(id)
+      setContacts(contacts.filter(contact => contact.id !== id))
+    } catch (error) {
+      console.error('Failed to delete contact:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <ContactsContext.Provider value={{
+        contacts: [],
+        addContact: () => {},
+        updateContact: () => {},
+        deleteContact: () => {},
+        loading: true
+      }}>
+        {children}
+      </ContactsContext.Provider>
+    )
   }
 
   return (
@@ -44,7 +85,8 @@ export const ContactsProvider = ({ children }) => {
       contacts,
       addContact,
       updateContact,
-      deleteContact
+      deleteContact,
+      loading: false
     }}>
       {children}
     </ContactsContext.Provider>

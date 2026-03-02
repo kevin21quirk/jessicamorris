@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { api } from '../lib/api'
 
 const NotesContext = createContext()
 
@@ -11,39 +12,87 @@ export const useNotesContext = () => {
 }
 
 export const NotesProvider = ({ children }) => {
-  const [notes, setNotes] = useState(() => {
-    const saved = localStorage.getItem('jm-notes')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [notes, setNotes] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    localStorage.setItem('jm-notes', JSON.stringify(notes))
-  }, [notes])
+    loadNotes()
+  }, [])
 
-  const addNote = (note) => {
-    const newNote = {
-      ...note,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+  const loadNotes = async () => {
+    try {
+      const data = await api.getNotes()
+      setNotes(data)
+    } catch (error) {
+      console.error('Failed to load notes:', error)
+    } finally {
+      setLoading(false)
     }
-    setNotes([...notes, newNote])
   }
 
-  const updateNote = (id, updates) => {
-    setNotes(notes.map(note => 
-      note.id === id ? { ...note, ...updates, updatedAt: new Date().toISOString() } : note
-    ))
+  const addNote = async (note) => {
+    try {
+      const newNote = {
+        ...note,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+      const created = await api.createNote(newNote)
+      setNotes([...notes, created])
+    } catch (error) {
+      console.error('Failed to add note:', error)
+    }
   }
 
-  const deleteNote = (id) => {
-    setNotes(notes.filter(note => note.id !== id))
+  const updateNote = async (id, updates) => {
+    try {
+      const note = notes.find(n => n.id === id)
+      if (!note) return
+      
+      const updatedNote = { ...note, ...updates, updatedAt: new Date().toISOString() }
+      await api.updateNote(id, updatedNote)
+      setNotes(notes.map(n => n.id === id ? updatedNote : n))
+    } catch (error) {
+      console.error('Failed to update note:', error)
+    }
   }
 
-  const pinNote = (id) => {
-    setNotes(notes.map(note => 
-      note.id === id ? { ...note, pinned: !note.pinned } : note
-    ))
+  const deleteNote = async (id) => {
+    try {
+      await api.deleteNote(id)
+      setNotes(notes.filter(note => note.id !== id))
+    } catch (error) {
+      console.error('Failed to delete note:', error)
+    }
+  }
+
+  const pinNote = async (id) => {
+    try {
+      const note = notes.find(n => n.id === id)
+      if (!note) return
+      
+      const updatedNote = { ...note, pinned: !note.pinned }
+      await api.updateNote(id, updatedNote)
+      setNotes(notes.map(n => n.id === id ? updatedNote : n))
+    } catch (error) {
+      console.error('Failed to pin note:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <NotesContext.Provider value={{
+        notes: [],
+        addNote: () => {},
+        updateNote: () => {},
+        deleteNote: () => {},
+        pinNote: () => {},
+        loading: true
+      }}>
+        {children}
+      </NotesContext.Provider>
+    )
   }
 
   return (
@@ -52,7 +101,8 @@ export const NotesProvider = ({ children }) => {
       addNote,
       updateNote,
       deleteNote,
-      pinNote
+      pinNote,
+      loading: false
     }}>
       {children}
     </NotesContext.Provider>

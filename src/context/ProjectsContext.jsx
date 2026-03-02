@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { api } from '../lib/api'
 
 const ProjectsContext = createContext()
 
@@ -11,68 +12,122 @@ export const useProjectsContext = () => {
 }
 
 export const ProjectsProvider = ({ children }) => {
-  const [projects, setProjects] = useState(() => {
-    const saved = localStorage.getItem('jm-projects')
-    return saved ? JSON.parse(saved) : []
-  })
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    localStorage.setItem('jm-projects', JSON.stringify(projects))
-  }, [projects])
+    loadProjects()
+  }, [])
 
-  const addProject = (project) => {
-    const newProject = {
-      ...project,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      tasks: [],
-      milestones: []
+  const loadProjects = async () => {
+    try {
+      const data = await api.getProjects()
+      setProjects(data)
+    } catch (error) {
+      console.error('Failed to load projects:', error)
+    } finally {
+      setLoading(false)
     }
-    setProjects([...projects, newProject])
   }
 
-  const updateProject = (id, updates) => {
-    setProjects(projects.map(project => 
-      project.id === id ? { ...project, ...updates } : project
-    ))
-  }
-
-  const deleteProject = (id) => {
-    setProjects(projects.filter(project => project.id !== id))
-  }
-
-  const addProjectTask = (projectId, task) => {
-    setProjects(projects.map(project => {
-      if (project.id === projectId) {
-        const newTask = {
-          ...task,
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString()
-        }
-        return {
-          ...project,
-          tasks: [...(project.tasks || []), newTask]
-        }
+  const addProject = async (project) => {
+    try {
+      const newProject = {
+        ...project,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        tasks: [],
+        milestones: []
       }
-      return project
-    }))
+      const created = await api.createProject(newProject)
+      setProjects([...projects, created])
+    } catch (error) {
+      console.error('Failed to add project:', error)
+    }
   }
 
-  const addMilestone = (projectId, milestone) => {
-    setProjects(projects.map(project => {
-      if (project.id === projectId) {
-        const newMilestone = {
-          ...milestone,
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString()
-        }
-        return {
-          ...project,
-          milestones: [...(project.milestones || []), newMilestone]
-        }
+  const updateProject = async (id, updates) => {
+    try {
+      const project = projects.find(p => p.id === id)
+      if (!project) return
+      
+      const updatedProject = { ...project, ...updates }
+      await api.updateProject(id, updatedProject)
+      setProjects(projects.map(p => p.id === id ? updatedProject : p))
+    } catch (error) {
+      console.error('Failed to update project:', error)
+    }
+  }
+
+  const deleteProject = async (id) => {
+    try {
+      await api.deleteProject(id)
+      setProjects(projects.filter(project => project.id !== id))
+    } catch (error) {
+      console.error('Failed to delete project:', error)
+    }
+  }
+
+  const addProjectTask = async (projectId, task) => {
+    try {
+      const project = projects.find(p => p.id === projectId)
+      if (!project) return
+      
+      const newTask = {
+        ...task,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString()
       }
-      return project
-    }))
+      
+      const updatedProject = {
+        ...project,
+        tasks: [...(project.tasks || []), newTask]
+      }
+      
+      await api.updateProject(projectId, updatedProject)
+      setProjects(projects.map(p => p.id === projectId ? updatedProject : p))
+    } catch (error) {
+      console.error('Failed to add project task:', error)
+    }
+  }
+
+  const addMilestone = async (projectId, milestone) => {
+    try {
+      const project = projects.find(p => p.id === projectId)
+      if (!project) return
+      
+      const newMilestone = {
+        ...milestone,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString()
+      }
+      
+      const updatedProject = {
+        ...project,
+        milestones: [...(project.milestones || []), newMilestone]
+      }
+      
+      await api.updateProject(projectId, updatedProject)
+      setProjects(projects.map(p => p.id === projectId ? updatedProject : p))
+    } catch (error) {
+      console.error('Failed to add milestone:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <ProjectsContext.Provider value={{
+        projects: [],
+        addProject: () => {},
+        updateProject: () => {},
+        deleteProject: () => {},
+        addProjectTask: () => {},
+        addMilestone: () => {},
+        loading: true
+      }}>
+        {children}
+      </ProjectsContext.Provider>
+    )
   }
 
   return (
@@ -82,7 +137,8 @@ export const ProjectsProvider = ({ children }) => {
       updateProject,
       deleteProject,
       addProjectTask,
-      addMilestone
+      addMilestone,
+      loading: false
     }}>
       {children}
     </ProjectsContext.Provider>
