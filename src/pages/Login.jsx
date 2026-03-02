@@ -34,11 +34,11 @@ const Login = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-center">
-            <div className="flex justify-center mb-3">
+            <div className="flex justify-center mb-4">
               <img 
                 src="/jm_remove_back.png" 
                 alt="Jessica Morris" 
-                className="h-32 w-32 object-contain drop-shadow-2xl"
+                className="h-56 w-56 object-contain drop-shadow-2xl"
               />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">Jessica Morris</h1>

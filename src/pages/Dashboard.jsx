@@ -82,12 +82,12 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-700 to-gold-600 bg-clip-text text-transparent">Dashboard</h1>
-          <p className="text-gray-500 mt-2 font-medium">Welcome back! Here's your overview.</p>
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary-700 to-gold-600 bg-clip-text text-transparent">Dashboard</h1>
+          <p className="text-sm md:text-base text-gray-500 mt-2 font-medium">Welcome back! Here's your overview.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
         <StatCard
           title="Tasks"
           value={stats.total}
@@ -125,7 +125,7 @@ const Dashboard = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all duration-200">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -180,7 +180,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-200">
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-5">
             <div className="flex items-center justify-between">
