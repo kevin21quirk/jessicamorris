@@ -18,7 +18,21 @@ import {
 import { useAuth } from '../context/AuthContext'
 
 const Layout = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768
+      setIsMobile(mobile)
+      if (!mobile && !sidebarOpen) {
+        setSidebarOpen(true)
+      }
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -48,7 +62,7 @@ const Layout = ({ children }) => {
     <div className="min-h-screen flex bg-gray-50">
       <aside 
         className={`fixed left-0 top-0 h-full bg-gradient-to-b from-primary-600 to-primary-800 shadow-2xl transition-all duration-300 z-40 ${
-          sidebarOpen ? 'w-72' : 'w-20'
+          sidebarOpen ? 'w-72' : isMobile ? '-translate-x-full w-72' : 'w-20'
         }`}
       >
         <div className="flex flex-col h-full">
@@ -121,19 +135,27 @@ const Layout = ({ children }) => {
       </aside>
 
       <div className={`flex-1 flex flex-col transition-all duration-300 ${
-        sidebarOpen ? 'ml-72' : 'ml-20'
+        isMobile ? 'ml-0' : (sidebarOpen ? 'ml-72' : 'ml-20')
       }`}>
         <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-gray-200/50 shadow-sm">
-          <div className="flex items-center justify-between px-8 py-4">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between px-4 md:px-8 py-4">
+            <div className="flex items-center gap-2 md:gap-4">
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700 md:hidden"
+                >
+                  <Menu size={24} />
+                </button>
+              )}
               <img 
                 src="/jm_remove_back.png" 
                 alt="Jessica Morris" 
-                className="h-48 w-48 object-contain drop-shadow-lg -my-12"
+                className="h-12 w-12 md:h-48 md:w-48 object-contain drop-shadow-lg md:-my-12"
               />
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-700 to-gold-600 bg-clip-text text-transparent">Jessica Morris</h1>
-                <p className="text-sm text-gray-500 font-medium">Personal Assistant System</p>
+                <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-primary-700 to-gold-600 bg-clip-text text-transparent">Jessica Morris</h1>
+                <p className="text-xs text-gray-500 font-medium hidden md:block">Personal Assistant System</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -147,7 +169,7 @@ const Layout = ({ children }) => {
         </header>
 
         <main className="flex-1 overflow-auto bg-gray-50">
-          <div className="p-8 max-w-[1600px] mx-auto">
+          <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
             {children}
           </div>
         </main>

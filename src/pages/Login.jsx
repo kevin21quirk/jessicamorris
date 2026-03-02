@@ -30,15 +30,15 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-primary-50 to-gold-50">
-      <div className="w-full max-w-md p-8">
+      <div className="w-full max-w-xl p-8">
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-8 text-center overflow-visible relative">
-            <div className="flex justify-center -mt-16 mb-4">
+          <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-center">
+            <div className="flex justify-center mb-3">
               <img 
                 src="/jm_remove_back.png" 
                 alt="Jessica Morris" 
-                className="h-80 w-80 object-contain drop-shadow-2xl"
+                className="h-32 w-32 object-contain drop-shadow-2xl"
               />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">Jessica Morris</h1>
