@@ -3,9 +3,17 @@ const API_BASE = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api';
 export const api = {
   // Tasks
   async getTasks() {
-    const res = await fetch(`${API_BASE}/tasks`);
-    if (!res.ok) throw new Error('Failed to fetch tasks');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/tasks`);
+      if (!res.ok) {
+        console.error('Failed to fetch tasks:', res.status);
+        return [];
+      }
+      return res.json();
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      return [];
+    }
   },
 
   async createTask(task) {
@@ -38,9 +46,17 @@ export const api = {
 
   // Emails
   async getEmails() {
-    const res = await fetch(`${API_BASE}/emails`);
-    if (!res.ok) throw new Error('Failed to fetch emails');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/emails`);
+      if (!res.ok) {
+        console.error('Failed to fetch emails:', res.status);
+        return [];
+      }
+      return res.json();
+    } catch (error) {
+      console.error('Error fetching emails:', error);
+      return [];
+    }
   },
 
   async createEmail(email) {
@@ -73,9 +89,17 @@ export const api = {
 
   // Notes
   async getNotes() {
-    const res = await fetch(`${API_BASE}/notes`);
-    if (!res.ok) throw new Error('Failed to fetch notes');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/notes`);
+      if (!res.ok) {
+        console.error('Failed to fetch notes:', res.status);
+        return [];
+      }
+      return res.json();
+    } catch (error) {
+      console.error('Error fetching notes:', error);
+      return [];
+    }
   },
 
   async createNote(note) {
@@ -108,9 +132,17 @@ export const api = {
 
   // Contacts
   async getContacts() {
-    const res = await fetch(`${API_BASE}/contacts`);
-    if (!res.ok) throw new Error('Failed to fetch contacts');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/contacts`);
+      if (!res.ok) {
+        console.error('Failed to fetch contacts:', res.status);
+        return [];
+      }
+      return res.json();
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      return [];
+    }
   },
 
   async createContact(contact) {
@@ -143,9 +175,17 @@ export const api = {
 
   // Financial
   async getFinancialRecords() {
-    const res = await fetch(`${API_BASE}/financial`);
-    if (!res.ok) throw new Error('Failed to fetch financial records');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/financial`);
+      if (!res.ok) {
+        console.error('Failed to fetch financial records:', res.status);
+        return [];
+      }
+      return res.json();
+    } catch (error) {
+      console.error('Error fetching financial records:', error);
+      return [];
+    }
   },
 
   async createFinancialRecord(record) {
@@ -178,9 +218,17 @@ export const api = {
 
   // Projects
   async getProjects() {
-    const res = await fetch(`${API_BASE}/projects`);
-    if (!res.ok) throw new Error('Failed to fetch projects');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/projects`);
+      if (!res.ok) {
+        console.error('Failed to fetch projects:', res.status);
+        return [];
+      }
+      return res.json();
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      return [];
+    }
   },
 
   async createProject(project) {
@@ -213,9 +261,17 @@ export const api = {
 
   // Calendar
   async getCalendarEvents() {
-    const res = await fetch(`${API_BASE}/calendar`);
-    if (!res.ok) throw new Error('Failed to fetch calendar events');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/calendar`);
+      if (!res.ok) {
+        console.error('Failed to fetch calendar events:', res.status);
+        return [];
+      }
+      return res.json();
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      return [];
+    }
   },
 
   async createCalendarEvent(event) {
