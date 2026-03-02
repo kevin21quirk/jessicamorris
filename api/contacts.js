@@ -12,7 +12,11 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const contacts = await sql`SELECT * FROM contacts ORDER BY name ASC`;
-      return res.status(200).json(contacts);
+      const formattedContacts = contacts.map(contact => ({
+        ...contact,
+        createdAt: contact.created_at
+      }));
+      return res.status(200).json(formattedContacts);
     }
 
     if (req.method === 'POST') {

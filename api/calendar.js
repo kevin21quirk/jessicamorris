@@ -12,7 +12,11 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const events = await sql`SELECT * FROM calendar_events ORDER BY date ASC`;
-      return res.status(200).json(events);
+      const formattedEvents = events.map(event => ({
+        ...event,
+        createdAt: event.created_at
+      }));
+      return res.status(200).json(formattedEvents);
     }
 
     if (req.method === 'POST') {

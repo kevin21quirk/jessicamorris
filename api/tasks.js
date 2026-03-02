@@ -13,7 +13,17 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const tasks = await sql`SELECT * FROM tasks ORDER BY created_at DESC`;
-      return res.status(200).json(tasks);
+      // Convert database format to frontend format
+      const formattedTasks = tasks.map(task => ({
+        ...task,
+        assignedTo: task.assigned_to,
+        dueDate: task.due_date,
+        createdAt: task.created_at,
+        updatedAt: task.updated_at,
+        timeline: typeof task.timeline === 'string' ? JSON.parse(task.timeline) : task.timeline,
+        documents: typeof task.documents === 'string' ? JSON.parse(task.documents) : task.documents
+      }));
+      return res.status(200).json(formattedTasks);
     }
 
     if (req.method === 'POST') {

@@ -12,7 +12,16 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const projects = await sql`SELECT * FROM projects ORDER BY created_at DESC`;
-      return res.status(200).json(projects);
+      const formattedProjects = projects.map(project => ({
+        ...project,
+        startDate: project.start_date,
+        endDate: project.end_date,
+        createdAt: project.created_at,
+        updatedAt: project.updated_at,
+        tasks: typeof project.tasks === 'string' ? JSON.parse(project.tasks) : project.tasks,
+        milestones: typeof project.milestones === 'string' ? JSON.parse(project.milestones) : project.milestones
+      }));
+      return res.status(200).json(formattedProjects);
     }
 
     if (req.method === 'POST') {

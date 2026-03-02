@@ -12,7 +12,13 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const records = await sql`SELECT * FROM financial_records ORDER BY date DESC`;
-      return res.status(200).json(records);
+      const formattedRecords = records.map(record => ({
+        ...record,
+        invoiceNumber: record.invoice_number,
+        dueDate: record.due_date,
+        createdAt: record.created_at
+      }));
+      return res.status(200).json(formattedRecords);
     }
 
     if (req.method === 'POST') {

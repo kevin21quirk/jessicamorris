@@ -12,7 +12,15 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const emails = await sql`SELECT * FROM emails ORDER BY created_at DESC`;
-      return res.status(200).json(emails);
+      const formattedEmails = emails.map(email => ({
+        ...email,
+        from: email.from_email,
+        to: email.to_email,
+        relatedTask: email.related_task,
+        relatedTaskTitle: email.related_task_title,
+        createdAt: email.created_at
+      }));
+      return res.status(200).json(formattedEmails);
     }
 
     if (req.method === 'POST') {

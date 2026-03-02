@@ -12,7 +12,12 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       const notes = await sql`SELECT * FROM notes ORDER BY pinned DESC, created_at DESC`;
-      return res.status(200).json(notes);
+      const formattedNotes = notes.map(note => ({
+        ...note,
+        createdAt: note.created_at,
+        updatedAt: note.updated_at
+      }));
+      return res.status(200).json(formattedNotes);
     }
 
     if (req.method === 'POST') {
