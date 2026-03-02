@@ -35,7 +35,17 @@ export default async function handler(req, res) {
         RETURNING *
       `;
       
-      return res.status(201).json(result[0]);
+      const formatted = {
+        ...result[0],
+        assignedTo: result[0].assigned_to,
+        dueDate: result[0].due_date,
+        createdAt: result[0].created_at,
+        updatedAt: result[0].updated_at,
+        timeline: typeof result[0].timeline === 'string' ? JSON.parse(result[0].timeline) : result[0].timeline,
+        documents: typeof result[0].documents === 'string' ? JSON.parse(result[0].documents) : result[0].documents
+      };
+      
+      return res.status(201).json(formatted);
     }
 
     if (req.method === 'PUT') {
@@ -57,7 +67,17 @@ export default async function handler(req, res) {
         RETURNING *
       `;
       
-      return res.status(200).json(result[0]);
+      const formatted = {
+        ...result[0],
+        assignedTo: result[0].assigned_to,
+        dueDate: result[0].due_date,
+        createdAt: result[0].created_at,
+        updatedAt: result[0].updated_at,
+        timeline: typeof result[0].timeline === 'string' ? JSON.parse(result[0].timeline) : result[0].timeline,
+        documents: typeof result[0].documents === 'string' ? JSON.parse(result[0].documents) : result[0].documents
+      };
+      
+      return res.status(200).json(formatted);
     }
 
     if (req.method === 'DELETE') {
