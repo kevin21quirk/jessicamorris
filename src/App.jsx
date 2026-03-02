@@ -58,7 +58,6 @@ function App() {
         </NotesProvider>
       </TaskProvider>
     </AuthProvider>
-    </ErrorBoundary>
   )
 }
 
