@@ -28,11 +28,20 @@ export default async function handler(req, res) {
       
       const result = await sql`
         INSERT INTO emails (id, from_email, to_email, subject, body, direction, status, related_task, related_task_title, date)
-        VALUES (${id}, ${from}, ${to}, ${subject}, ${body || ''}, ${direction}, ${status}, ${relatedTask || null}, ${relatedTaskTitle || null}, ${date})
+        VALUES (${id}, ${from}, ${to}, ${subject}, ${body || ''}, ${direction}, ${status}, ${relatedTask || null}, ${relatedTaskTitle || null}, ${date || new Date().toISOString()})
         RETURNING *
       `;
       
-      return res.status(201).json(result[0]);
+      const formatted = {
+        ...result[0],
+        from: result[0].from_email,
+        to: result[0].to_email,
+        relatedTask: result[0].related_task,
+        relatedTaskTitle: result[0].related_task_title,
+        createdAt: result[0].created_at
+      };
+      
+      return res.status(201).json(formatted);
     }
 
     if (req.method === 'PUT') {
@@ -53,7 +62,16 @@ export default async function handler(req, res) {
         RETURNING *
       `;
       
-      return res.status(200).json(result[0]);
+      const formatted = {
+        ...result[0],
+        from: result[0].from_email,
+        to: result[0].to_email,
+        relatedTask: result[0].related_task,
+        relatedTaskTitle: result[0].related_task_title,
+        createdAt: result[0].created_at
+      };
+      
+      return res.status(200).json(formatted);
     }
 
     if (req.method === 'DELETE') {
