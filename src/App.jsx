@@ -12,7 +12,8 @@ import Financial from './pages/Financial'
 import Projects from './pages/Projects'
 import Login from './pages/Login'
 import ProtectedRoute from './components/ProtectedRoute'
-import { AuthProvider } from './context/AuthContext'
+import SplashScreen from './components/SplashScreen'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { TaskProvider } from './context/TaskContext'
 import { NotesProvider } from './context/NotesContext'
 import { ContactsProvider } from './context/ContactsContext'
@@ -20,9 +21,12 @@ import { EmailProvider } from './context/EmailContext'
 import { FinancialProvider } from './context/FinancialContext'
 import { ProjectsProvider } from './context/ProjectsContext'
 
-function App() {
+function AppContent() {
+  const { showSplash, setShowSplash } = useAuth()
+
   return (
-    <AuthProvider>
+    <>
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
       <TaskProvider>
         <NotesProvider>
           <ContactsProvider>
@@ -57,6 +61,14 @@ function App() {
           </ContactsProvider>
         </NotesProvider>
       </TaskProvider>
+    </>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
     </AuthProvider>
   )
 }

@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
     const saved = localStorage.getItem('jm-user')
     return saved ? JSON.parse(saved) : null
   })
+  const [showSplash, setShowSplash] = useState(false)
 
   useEffect(() => {
     localStorage.setItem('jm-auth', isAuthenticated.toString())
@@ -39,6 +40,11 @@ export const AuthProvider = ({ children }) => {
     if (username === 'Jessica' && password === 'KatiePrice123!') {
       setIsAuthenticated(true)
       setUser({ username: 'Jessica', name: 'Jessica Morris' })
+      // Show splash screen only on mobile devices
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (isMobile) {
+        setShowSplash(true)
+      }
       return true
     }
     return false
@@ -56,7 +62,9 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated,
       user,
       login,
-      logout
+      logout,
+      showSplash,
+      setShowSplash
     }}>
       {children}
     </AuthContext.Provider>
